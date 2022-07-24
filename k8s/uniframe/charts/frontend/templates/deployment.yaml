@@ -1,0 +1,35 @@
+
+apiVersion: apps/v1
+kind: Deployment
+metadata: 
+  name: {{ .Release.Name }}-frontend-deployment
+  labels:
+    app: frontend
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+      metadata:
+        labels:
+          app: frontend
+      spec:
+        containers:
+          - name: frontend
+            image: {{ .Values.global.aws_account }}.dkr.ecr.{{ .Values.global.aws_default_region }}.amazonaws.com/{{ .Values.global.app_name }}-{{ .Values.global.deploy_dev }}-frontend:{{ .Values.image.tag }}
+            imagePullPolicy: {{ .Values.image.imagePullPolicy }}
+            ports:
+              - name: frontend-api
+                containerPort: 80
+            resources:
+              requests:
+                cpu: {{ .Values.resources.cpu }}
+            # it doesn't work to override VUE_APP_BASE_URL here, because url env is used during yarn build stage
+            # env: 
+            #   - name: VUE_APP_BASE_URL
+            #     value: 'https://api.{{ .Values.global.ingress.hostname }}/api/v1'
+            #   - name: VUE_APP_DOCUMENTS_BASE_URL
+            #     value: 'https://doc.{{ .Values.global.ingress.hostname }}''
+        nodeSelector:
+          node-pool: {{ .Values.global.node_selector }} 

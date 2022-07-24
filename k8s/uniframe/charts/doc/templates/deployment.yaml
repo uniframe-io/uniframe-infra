@@ -1,0 +1,29 @@
+
+apiVersion: apps/v1
+kind: Deployment
+metadata: 
+  name: {{ .Release.Name }}-doc-deployment
+  labels:
+    app: doc
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      app: doc
+  template:
+      metadata:
+        labels:
+          app: doc
+      spec:
+        containers:
+          - name: doc
+            image: {{ .Values.global.aws_account }}.dkr.ecr.{{ .Values.global.aws_default_region }}.amazonaws.com/{{ .Values.global.app_name }}-{{ .Values.global.deploy_dev }}-doc:{{ .Values.image.tag }}
+            imagePullPolicy: {{ .Values.image.imagePullPolicy }}
+            ports:
+              - name: doc-api
+                containerPort: 8082
+            resources:
+              requests:
+                cpu: {{ .Values.resources.cpu }}
+        nodeSelector:
+          node-pool: {{ .Values.global.node_selector }} 

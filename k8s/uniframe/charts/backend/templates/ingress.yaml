@@ -1,0 +1,47 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Release.Name }}-backend-ingress
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/group.name: {{ .Release.Name }}-alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/security-groups: {{ .Values.global.ingress.sg }}
+    alb.ingress.kubernetes.io/certificate-arn: {{ .Values.global.ingress.acm_arn }}
+    alb.ingress.kubernetes.io/backend-protocol: HTTP
+    external-dns.alpha.kubernetes.io/hostname: {{ .Values.ingress.hostname_prefix }}.{{ .Values.global.ingress.hostname }}  
+    # listen to both 80 and 443 port
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+    # http to https redirect: https://stackoverflow.com/a/58034777
+    alb.ingress.kubernetes.io/ssl-redirect: '443'
+    # setup different healthcheck-path for different application
+    alb.ingress.kubernetes.io/healthcheck-path: {{ .Values.ingress.healthcheck_path }}
+    alb.ingress.kubernetes.io/healthcheck-interval-seconds: {{ quote .Values.ingress.healthcheck_path_interval }}
+    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: {{ quote .Values.ingress.healthcheck_timeout_seconds }}
+    alb.ingress.kubernetes.io/actions.response-403: >
+      {"type":"fixed-response","fixedResponseConfig":{"contentType":"text/plain","statusCode":"403","messageBody":"403 External access to endpoint not allowed"}}
+
+spec:
+  rules:
+    - host: {{ .Values.ingress.hostname_prefix }}.{{ .Values.global.ingress.hostname }}
+      http:
+        paths:
+          - path: /metrics
+            pathType: Prefix
+            backend:
+              service:
+                name: response-403
+                port:
+                  name: use-annotation
+    - host: {{ .Values.ingress.hostname_prefix }}.{{ .Values.global.ingress.hostname }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ .Release.Name }}-backend-service
+                port:
+                  number: 8000
+

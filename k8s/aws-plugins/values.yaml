@@ -1,0 +1,12 @@
+autoscaler:
+  image: "k8s.gcr.io/autoscaling/cluster-autoscaler:v1.21.1"
+  eks_cluster_name: ""
+  aws_role_arn: ""
+metrics:
+  namespace: amazon-cloudwatch
+  requests_cpu: 10m
+  requests_memory: 50Mi
+  limits_cpu: 50m
+  limits_memory: 50Mi
+global:
+  aws_default_region: ""

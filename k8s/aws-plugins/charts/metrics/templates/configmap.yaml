@@ -1,0 +1,29 @@
+# create configmap for cwagent config
+apiVersion: v1
+data:
+  # Configuration is in Json format. No matter what configure change you make,
+  # please keep the Json blob valid.
+  cwagentconfig.json: |
+    {
+    	"agent": {
+    		"metrics_collection_interval": 60,
+    		"run_as_user": "cwagent"
+    	},
+    	"metrics": {
+    		"append_dimensions": {
+    			"InstanceId": "${aws:InstanceId}",
+                "AutoScalingGroupName": "${aws:AutoScalingGroupName}"
+    		},
+    		"metrics_collected": {
+    			"disk": {
+    				"measurement": ["used_percent", "total"],
+    				"metrics_collection_interval": 60,
+    				"resources": ["/"]
+    			}
+    		}
+    	}
+    }
+kind: ConfigMap
+metadata:
+  name: cwagentconfig
+  namespace: {{ .Values.namespace }}

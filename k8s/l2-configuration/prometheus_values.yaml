@@ -1,0 +1,54 @@
+prometheus:
+  prometheusSpec:
+    resources:
+      requests:
+        memory: 2Gi
+        cpu: 200m
+      limits:
+        memory: 3Gi
+        cpu: 200m
+    additionalScrapeConfigs:
+      - job_name: "kubernetes-service-services"
+        metrics_path: /metrics
+        params:
+          module: [ http_2xx ]
+
+        kubernetes_sd_configs:
+          - role: service
+
+        relabel_configs:
+          # Example relabel to probe only some services that have "example.io/should_be_probed = true" annotation
+          #  - source_labels: [__meta_kubernetes_service_annotation_example_io_should_be_probed]
+          #    action: keep
+          #    regex: true
+          - source_labels: [ __address__ ]
+            target_label: __param_target
+          - target_label: __address__
+            replacement: uniframe-dev-backend-service.nm.svc:8000
+          - source_labels: [ __param_target ]
+            target_label: instance
+          - action: labelmap
+            regex: __meta_kubernetes_service_label_(.+)
+          - source_labels: [ __meta_kubernetes_namespace ]
+            target_label: kubernetes_namespace
+          - source_labels: [ __meta_kubernetes_service_name ]
+            target_label: kubernetes_name
+      - job_name: "kubernetes-service-services"
+        metrics_path: /metrics
+        params:
+          module: [ http_2xx ]
+
+
+
+alertmanager:
+  alertmanagerSpec:
+    nodeSelector:
+      node-pool: main
+
+grafana:
+  nodeSelector:
+    node-pool: main
+
+prometheusOperator:
+  nodeSelector:
+    node-pool: main

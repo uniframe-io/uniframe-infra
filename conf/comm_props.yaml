@@ -1,0 +1,6 @@
+product_prefix: uniframe
+#TODO: consider VPC peering
+vpc_default_cidr: "10.101.0.0/16"
+subnet_cidr_mask: 20
+ecr_assume_role_expiration_min: 120
+cd_user_arn: arn:aws:iam::671626527153:user/uniframe-cd-user

@@ -1,0 +1,71 @@
+backend:
+  replicas: 2
+  resources:
+    cpu: 0.25
+  image:
+    tag: latest
+    imagePullPolicy: Always
+  ingress:
+    hostname_prefix: api
+    healthcheck_path: /health-check
+    healthcheck_path_interval: 10
+    healthcheck_timeout_seconds: 5
+  service_account_name: k8s_sa_nm_default_role_name
+housekeeper:
+  replicas: 1
+  resources:
+    cpu: 0.1
+  image:
+    tag: latest
+    imagePullPolicy: Always
+  service_account_name: k8s_sa_nm_default_role_name
+frontend:
+  replicas: 2
+  resources:
+    cpu: 0.25  
+  image:
+    tag: latest
+    imagePullPolicy: Always
+    # currently tag use "eks", since we want to distinguish the ECS image
+    # in future it will be the same
+  ingress:
+    hostname_prefix: www
+    healthcheck_path: /
+    healthcheck_path_interval: 10
+    healthcheck_timeout_seconds: 5
+doc:
+  replicas: 2
+  resources:
+    cpu: 0.125  
+  image:
+    tag: latest
+    imagePullPolicy: Always
+  ingress:
+    hostname_prefix: doc
+    healthcheck_path: /
+    healthcheck_path_interval: 10
+    healthcheck_timeout_seconds: 5
+logger:
+  #TODO: remove logger image variable?
+  image:
+    repository: 671626527153.dkr.ecr.eu-west-1.amazonaws.com/com-uniframe-dev-logger
+    tag: latest
+    imagePullPolicy: Always
+  namespace: amazon-cloudwatch
+  fluent_bit_http_port: "2020"
+  fluent_bit_read_from_head: off
+  application_log_retention: 3
+  dataplane_log_retention: 3
+  host_log_retention: 3
+  requests_cpu: 10m
+  requests_memory: 100Mi
+  limits_cpu: 50m
+  limits_memory: 100Mi
+global:
+  namespace: ""
+  aws_default_region: ""
+  aws_account: 0
+  app_name: ""
+  deploy_dev: ""
+  ingress: {}
+  node_selector: main

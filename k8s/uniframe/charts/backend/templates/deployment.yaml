@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-backend-deployment
+  labels:
+    app: backend
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+        - name: backend
+          image: {{ .Values.global.aws_account }}.dkr.ecr.{{ .Values.global.aws_default_region }}.amazonaws.com/{{ .Values.global.app_name }}-{{ .Values.global.deploy_dev }}-backend:{{ .Values.image.tag }}
+          imagePullPolicy: {{ .Values.image.imagePullPolicy }}
+          args: 
+            - backend-public
+          ports:
+            - name: backend-api
+              containerPort: 8000
+          resources:
+              requests:
+                cpu: {{ .Values.resources.cpu }}
+          env: 
+            - name: AWS_DEFAULT_REGION
+              value: {{ .Values.global.aws_default_region }}
+            - name: API_RUN_LOCATION
+              value: k8s
+            - name: DOMAIN_NAME
+              value: {{ .Values.global.ingress.hostname }}
+      nodeSelector:
+        node-pool: {{ .Values.global.node_selector }} 
+

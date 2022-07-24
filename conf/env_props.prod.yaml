@@ -1,0 +1,140 @@
+# This is the global configuration for name matching infrastracture
+whitelist_ips:
+  - ip: "0.0.0.0/0" 
+    entity: public    
+
+ebs_storage:
+  general_storage:
+    volume_gb: 50
+
+eks_host_zone:
+  id: "ROUTE53-HOST-ZONE-ID"
+  domain_name: "uniframe.io"
+
+eks_cluster_cfg:
+  whitelist_ips:
+    - ip: "123.45.67.89/32"
+      entity: SOMEONE_ACCESS_K8S_CLUSTER
+  node_group:
+    -
+      id_surfix: main
+      instance_type: "t3.medium"
+      min_size: 2
+      max_size: 2
+      node_label:
+        key: node-pool
+        value: main
+      label:
+        node-pool: main
+      tags:
+        k8s.io/cluster-autoscaler/node-template/label/node-pool: main
+        k8s.io/cluster-autoscaler/node-template/taint/feaster: "true:NoSchedule"
+      taints:
+        effect: NO_SCHEDULE
+        key: feaster
+        value: "true"
+    -
+      id_surfix: nm-task
+      instance_type: "t3.medium"
+      min_size: 1
+      max_size: 4
+      node_label:
+        key: node-pool
+        value: nm-task
+      label:
+        node-pool: nm-task
+      tags:
+        k8s.io/cluster-autoscaler/node-template/label/node-pool: nm-task
+        k8s.io/cluster-autoscaler/node-template/taint/node-pool: "true:NoSchedule"
+      taints:
+        effect: NO_SCHEDULE
+        key: node-pool
+        value: "true"
+    -
+      id_surfix: nm-task-large
+      instance_type: "t3a.xlarge"
+      min_size: 0
+      max_size: 2
+      node_label:
+        key: node-pool
+        value: nm-task-large
+      label:
+        node-pool: nm-task-large
+      tags:
+        k8s.io/cluster-autoscaler/node-template/label/node-pool: nm-task-large
+        k8s.io/cluster-autoscaler/node-template/taint/node-pool: "true:NoSchedule"
+      taints:
+        effect: NO_SCHEDULE
+        key: node-pool
+        value: "true"
+
+
+backend_task_def:
+  task_memory_limit_mib: 2048
+  task_cpu: 1024
+  port: 8000  # this is the port expose to LB
+  container_def_l:
+    -
+      name: fastapi
+      memory_limit_mib: 512
+      memory_reservation_mib: 512
+      cpu: 256
+      essential: true
+      port: 8000
+      expose_port: 8000
+      command: ["backend-public"]
+    -
+      name: redis
+      memory_limit_mib: 512
+      memory_reservation_mib: 512
+      essential: false
+      cpu: 256
+      port: 6379
+      ulimits:
+        hard_limit: 65536
+        soft_limit: 65536
+        name: "NOFILE"
+    -
+      name: rq_worker_batch
+      essential: false
+      memory_limit_mib: 512
+      memory_reservation_mib: 512
+      cpu: 256
+      command: ["start-rq-batch-worker"]
+    -
+      name: rq_worker_realtime
+      essential: false
+      memory_limit_mib: 512
+      memory_reservation_mib: 512
+      cpu: 256
+      port: 8002
+      command: ["start-rq-realtime-worker"]
+
+frontend_task_def:
+  task_memory_limit_mib: 512
+  task_cpu: 256
+  port: 80  # this is the port expose to LB
+  container_def_l:  
+    -
+      name: frontend_container
+      essential: true
+      memory_limit_mib: 512
+      memory_reservation_mib: 512
+      cpu: 256
+      port: 80
+      expose_port: 80
+
+doc_task_def:
+  task_memory_limit_mib: 512
+  task_cpu: 256
+  port: 8082  # this is the port expose to LB
+  container_def_l:
+    -
+      name: doc_container
+      essential: true
+      memory_limit_mib: 512
+      memory_reservation_mib: 512
+      cpu: 256
+      port: 8082
+      expose_port: 8082
+      command: ["serve-doc-public"]
